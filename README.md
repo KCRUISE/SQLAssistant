@@ -1,1 +1,1 @@
-# SQLAssistant
+# SQL Assistant
