@@ -7,11 +7,16 @@ import type {
   ExplainSqlResponse
 } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "your-api-key-here"
-});
+// .env 파일의 OPENAI_API_KEY만 사용하도록 수정
+const apiKey = process.env.OPENAI_API_KEY;
 
+if (!apiKey) {
+  throw new Error("The OPENAI_API_KEY environment variable is missing or empty.");
+}
+
+const openai = new OpenAI({ apiKey });
+
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export class OpenAIService {
   async generateSql(request: GenerateSqlRequest): Promise<GenerateSqlResponse> {
     try {

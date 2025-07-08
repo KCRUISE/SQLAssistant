@@ -1,8 +1,11 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Copy, Download, Indent, Play, CheckCircle, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import CodeMirror from '@uiw/react-codemirror';
+import { sql as sqlLang } from '@codemirror/lang-sql'; // sql을 sqlLang으로 변경
+import { useTheme } from '@/components/ThemeProvider';
 
 interface SqlEditorProps {
   sql: string;
@@ -17,49 +20,19 @@ interface SqlEditorProps {
 }
 
 export function SqlEditor({ 
-  sql, 
+  sql: initialSql, 
   isLoading = false, 
   onFormat, 
   onExecute,
   metadata = {}
 }: SqlEditorProps) {
   const { toast } = useToast();
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [highlightedSql, setHighlightedSql] = useState('');
+  const { isDark } = useTheme();
+  const [sql, setSql] = useState(initialSql);
 
   useEffect(() => {
-    if (sql) {
-      // Simple SQL highlighting
-      const highlighted = highlightSql(sql);
-      setHighlightedSql(highlighted);
-    }
-  }, [sql]);
-
-  const highlightSql = (sqlText: string): string => {
-    // Keywords
-    const keywords = /\b(SELECT|FROM|WHERE|JOIN|INNER|LEFT|RIGHT|FULL|OUTER|ON|GROUP|BY|HAVING|ORDER|LIMIT|OFFSET|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|ALTER|DROP|INDEX|CONSTRAINT|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|NOT|NULL|DEFAULT|CHECK|AND|OR|IN|LIKE|BETWEEN|EXISTS|CASE|WHEN|THEN|ELSE|END|AS|DISTINCT|ALL|UNION|INTERSECT|EXCEPT|WITH|RECURSIVE|CAST|EXTRACT)\b/gi;
-    
-    // Functions
-    const functions = /\b(COUNT|SUM|AVG|MIN|MAX|ROUND|FLOOR|CEIL|ABS|UPPER|LOWER|TRIM|LENGTH|SUBSTRING|REPLACE|CONCAT|COALESCE|NULLIF|NOW|CURRENT_DATE|CURRENT_TIME|DATE_ADD|DATE_SUB|YEAR|MONTH|DAY|HOUR|MINUTE|SECOND)\b/gi;
-    
-    // String literals
-    const strings = /'[^']*'/g;
-    
-    // Numbers
-    const numbers = /\b\d+(\.\d+)?\b/g;
-    
-    // Comments
-    const comments = /--[^\n]*|\/\*[\s\S]*?\*\//g;
-
-    let highlighted = sqlText
-      .replace(comments, '<span class="sql-comment">$&</span>')
-      .replace(strings, '<span class="sql-string">$&</span>')
-      .replace(numbers, '<span class="sql-number">$&</span>')
-      .replace(functions, '<span class="sql-function">$&</span>')
-      .replace(keywords, '<span class="sql-keyword">$&</span>');
-
-    return highlighted;
-  };
+    setSql(initialSql);
+  }, [initialSql]);
 
   const handleCopy = async () => {
     try {
@@ -124,16 +97,19 @@ export function SqlEditor({
       </div>
       
       <div className="flex-1 p-4">
-        <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm leading-relaxed h-full overflow-auto code-editor">
+        <div className="bg-muted/50 rounded-lg font-mono text-sm leading-relaxed h-full overflow-auto code-editor">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div
-              ref={editorRef}
-              className="whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: highlightedSql || sql }}
+            <CodeMirror
+              value={sql}
+              height="100%"
+              extensions={[sqlLang()]} // sql()을 sqlLang()으로 변경
+              onChange={(value) => setSql(value)}
+              theme={isDark ? 'dark' : 'light'}
+              className="h-full"
             />
           )}
         </div>
